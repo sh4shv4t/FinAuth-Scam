@@ -2,11 +2,16 @@ import os
 import numpy as np
 from flask import Flask, request, jsonify
 from dotenv import load_dotenv
-from geopy.geocoders import Nominatim
 
-# Import the correct, updated functions from your other modules
+# --- New Imports for Location Analysis ---
+from geopy.geocoders import Nominatim
+from geopy.distance import geodesic
+from sklearn.cluster import KMeans # <-- FIX: Added the missing import for KMeans
+
+# Import your existing custom modules
 from model_loader import load_model, preprocess_for_ann
-from llm_analyzer import analyze_with_llm # Ensures we are calling the correct function
+from llm_analyzer import analyze_with_llm
+
 
 # Load environment variables from .env file
 load_dotenv()
@@ -69,7 +74,6 @@ def analyze_transaction():
         return jsonify({"error": "An internal server error occurred."}), 500
     
 # --- NEW ENDPOINT FOR LOCATION ANALYSIS ---
-
 def geocode_location(location_name):
     """Helper function to convert a single location name to coordinates."""
     try:
