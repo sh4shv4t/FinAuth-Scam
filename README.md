@@ -6,7 +6,7 @@ ANN-based Scoring: A pre-trained Artificial Neural Network (ANN) model first pro
 LLM-based Analysis: The scam score, along with the current and historical transaction data, is then sent to a Large Language Model (LLM) for a final, human-readable analysis and a reason for flagging the transaction as fraudulent.
 
 Project Structure
-.
+
 ├── models/
 │   └── fraud_detection_ann.h5  # Placeholder for your trained ANN model
 ├── main.py                     # Main Flask application
