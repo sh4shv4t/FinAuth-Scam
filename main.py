@@ -2,6 +2,7 @@ import os
 import numpy as np
 from flask import Flask, request, jsonify
 from dotenv import load_dotenv
+from geopy.geocoders import Nominatim
 
 # Import the correct, updated functions from your other modules
 from model_loader import load_model, preprocess_for_ann
@@ -12,6 +13,10 @@ load_dotenv()
 
 # Initialize the Flask application
 app = Flask(__name__)
+
+# --- Initialize Geocoder for Location Analysis ---
+# Using a descriptive user_agent is good practice
+geolocator = Nominatim(user_agent="fraud_detection_app_v1")
 
 # --- Load the pre-trained ANN model at startup ---
 try:
@@ -62,6 +67,67 @@ def analyze_transaction():
         # This is a general catch-all for any unexpected crash during processing.
         print(f"❌ An unexpected error occurred in /analyze endpoint: {e}")
         return jsonify({"error": "An internal server error occurred."}), 500
+    
+# --- NEW ENDPOINT FOR LOCATION ANALYSIS ---
+
+def geocode_location(location_name):
+    """Helper function to convert a single location name to coordinates."""
+    try:
+        location = geolocator.geocode(location_name)
+        if location:
+            return (location.latitude, location.longitude)
+    except Exception as e:
+        print(f"Geocoding error for '{location_name}': {e}")
+    return None
+
+@app.route('/analyze_location', methods=['POST'])
+def analyze_location_endpoint():
+    """
+    Analyzes a new transaction's location against a history of past locations.
+    """
+    data = request.get_json()
+    if not data or "current_location" not in data or "previous_locations" not in data:
+        return jsonify({"error": "Request must include 'current_location' and 'previous_locations'"}), 400
+
+    current_loc_str = data["current_location"]
+    previous_locs_str = data["previous_locations"]
+
+    # --- Step 1: Geocode all location strings to coordinates ---
+    previous_coords = [coord for coord in (geocode_location(loc) for loc in previous_locs_str) if coord]
+    current_coord = geocode_location(current_loc_str)
+
+    if not current_coord or not previous_coords:
+        return jsonify({"error": "Could not geocode one or more locations."}), 400
+
+    # --- Step 2: Find the central point (centroid) of past locations ---
+    # We use KMeans with 1 cluster to find the mathematical center.
+    kmeans = KMeans(n_clusters=1, random_state=42, n_init='auto')
+    kmeans.fit(previous_coords)
+    centroid = kmeans.cluster_centers_[0]
+
+    # --- Step 3: Calculate distance from the new location to the center ---
+    distance_km = geodesic(current_coord, centroid).kilometers
+
+    # --- Step 4: Normalize the distance to a score between 0 and 1 ---
+    # This simple exponential function maps distance to a 0-1 score.
+    # A small distance gives a score near 0; a large distance approaches 1.
+    # The '0.005' factor can be tuned to change sensitivity.
+    anomaly_score = 1 - np.exp(-0.005 * distance_km)
+
+    # --- Step 5: Return the analysis ---
+    response = {
+        "current_location": {
+            "name": current_loc_str,
+            "coordinates": current_coord
+        },
+        "historical_center": {
+            "coordinates": list(centroid)
+        },
+        "distance_from_center_km": round(distance_km, 2),
+        "location_anomaly_score": round(anomaly_score, 4)
+    }
+    return jsonify(response), 200
+
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

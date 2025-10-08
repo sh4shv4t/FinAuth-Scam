@@ -2,3 +2,5 @@ Flask>=2.3
 tensorflow
 python-dotenv
 requests
+geopy 
+scikit-learn
