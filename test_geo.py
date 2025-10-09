@@ -1,51 +1,46 @@
 import requests
 import json
 
-# The URL for your new location analysis endpoint
-API_URL = "http://127.0.0.1:5000/analyze_location"
+# The URL should match the port in your main.py file (e.g., 7000)
+API_URL = "http://127.0.0.1:7000/analyze_location"
 
 # --- Test Case 1: Low Anomaly Location ---
-# The current location (Pune) is geographically close to the historical cluster in India.
-# We expect a low anomaly score.
+# MODIFIED: Payload now sends coordinate objects instead of strings.
+# Pune is geographically close to the historical cluster in India.
 low_anomaly_payload = {
-    "current_location": "Pune, India",
-    "previous_locations": [
-        "Jaipur, India",
-        "Delhi, India",
-        "Mumbai, India",
-        "Bangalore, India"
+    "current_geolocation": {"latitude": 18.5204, "longitude": 73.8567}, # Pune, India
+    "previous_geolocations": [
+        {"latitude": 18.5204, "longitude": 73.8567}, # Pune, India
+        {"latitude": 28.7041, "longitude": 77.1025}, # Delhi, India
+        {"latitude": 19.0760, "longitude": 72.8777}, # Mumbai, India
+        {"latitude": 18.5204, "longitude": 73.8567}  # Pune, India
     ]
 }
 
 # --- Test Case 2: High Anomaly Location ---
-# The current location (Moscow) is very far from the historical cluster.
-# We expect a high anomaly score (close to 1.0).
+# MODIFIED: Payload now sends coordinate objects.
+# Moscow is very far from the historical cluster.
 high_anomaly_payload = {
-    "current_location": "Moscow, Russia",
-    "previous_locations": [
-        "Jaipur, India",
-        "Delhi, India",
-        "Mumbai, India",
-        "Bangalore, India"
+    "current_geolocation": {"latitude": 55.7558, "longitude": 37.6173}, # Moscow, Russia
+    "previous_geolocations": [
+        {"latitude": 26.9124, "longitude": 75.7873}, # Jaipur, India
+        {"latitude": 28.7041, "longitude": 77.1025}, # Delhi, India
+        {"latitude": 19.0760, "longitude": 72.8777}, # Mumbai, India
+        {"latitude": 12.9716, "longitude": 77.5946}  # Bangalore, India
     ]
 }
 
 # --- Test Case 3: Invalid Payload ---
-# This payload is missing the required 'previous_locations' key.
-# We expect the server to catch this and return a 400 Bad Request error.
+# MODIFIED: Payload is missing the 'previous_geolocations' key.
 invalid_payload = {
-    "current_location": "London, UK"
-    # Missing "previous_locations"
+    "current_geolocation": {"latitude": 51.5074, "longitude": -0.1278} # London, UK
+    # Missing "previous_geolocations"
 }
 
 
 def test_location_endpoint(payload, description):
     """
     Sends a location payload to the /analyze_location endpoint and prints the response.
-
-    Args:
-        payload (dict): The JSON data to send in the request body.
-        description (str): A string describing the test case.
     """
     print(f"\n{'='*20} {description.upper()} {'='*20}")
     try:
@@ -63,7 +58,7 @@ def test_location_endpoint(payload, description):
         try:
             print(http_err.response.json())
         except json.JSONDecodeError:
-            print(http_err.response.text) # Fallback for non-JSON error pages
+            print(http_err.response.text)
     except requests.exceptions.RequestException as err:
         print(f"❌ CONNECTION ERROR: Could not connect to the server at {API_URL}.")
         print("Please make sure your Flask server is running.")
@@ -76,3 +71,4 @@ if __name__ == "__main__":
     test_location_endpoint(low_anomaly_payload, "Testing a LOW Anomaly Location")
     test_location_endpoint(high_anomaly_payload, "Testing a HIGH Anomaly Location")
     test_location_endpoint(invalid_payload, "Testing an INVALID Payload")
+

@@ -223,27 +223,6 @@ def main():
     # Step 5
     save_trained_model(fraud_classifier_model)
 
-
 if __name__ == "__main__":
     main()
 
-# --- Variable and Function Naming Suggestions ---
-#
-# As requested, here are some suggestions for renaming elements in this script
-# to enhance clarity and follow common conventions:
-#
-# * File Name: `train_model.py` is good. A more specific alternative could be
-#   `fraud_model_trainer.py`.
-#
-# * Functions:
-#   * `setup_and_download_data` could be `prepare_dataset_environment`.
-#   * `load_and_prepare_data` could be `load_and_preprocess_transactions`.
-#   * `build_fraud_detection_model` is clear, but `create_ann_classifier` is a
-#     good alternative.
-#
-# * Variables:
-#   * `transaction_df` is a good, descriptive name.
-#   * `X` and `y` are strong conventions in machine learning for features and
-#     the target variable. More verbose alternatives are `features` and `labels`.
-#   * `fraud_classifier_model` is a very clear name. `ann_classifier` would be
-#     a shorter, also effective alternative.

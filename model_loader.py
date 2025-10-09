@@ -1,10 +1,12 @@
 import numpy as np
 import tensorflow as tf
 from sklearn.preprocessing import StandardScaler
+from datetime import datetime # Import the datetime library
 
 def load_model(model_path='models/fraud_detection_ann.h5'):
     """
     Loads the pre-trained Keras ANN model from the specified path.
+    (This function is correct and remains unchanged.)
     """
     try:
         model = tf.keras.models.load_model(model_path)
@@ -12,50 +14,43 @@ def load_model(model_path='models/fraud_detection_ann.h5'):
         return model
     except Exception as e:
         print(f"❌ Error loading Keras model: {e}")
-        # Re-raise the exception to be handled at startup in main.py
         raise e
 
 def preprocess_for_ann(current_transaction):
     """
-    Prepares the input data from a JSON request for the ANN model.
-
-    This function is critical and must transform the real-world input into the
-    exact format the model was trained on.
-
-    The model was trained on 30 features (scaled_amount, scaled_time, and 28 V-features).
-    Since we only receive 'amount' from the API that matches the training data,
-    we will use it and pad the other 29 features with zeros.
-
-    Args:
-        current_transaction (dict): A dictionary containing the transaction details.
-                                    Example: {'amount': 45.50, ...}
-
-    Returns:
-        np.ndarray: A NumPy array of shape (1, 30) ready for prediction.
+    MODIFIED: Prepares input data from a full transaction object for the ANN.
+    The model was trained on 30 features (scaled_time, scaled_amount, and 28 V-features).
+    This function now extracts and scales both time and amount to better match the training data.
     """
     try:
-        # 1. Create a placeholder array of zeros with the correct shape.
-        #    The shape is (1, 30) because we have 1 transaction and 30 features.
+        # 1. Create a placeholder array of zeros with the correct shape (1, 30).
         feature_vector = np.zeros((1, 30))
 
-        # 2. Extract the transaction amount.
+        # --- 2. MODIFIED: Extract and process both Amount and Timestamp ---
+
+        # A) Process Amount
         amount = current_transaction.get('amount', 0.0)
+        # In a real system, you would load and use a scaler fitted on the original training data.
+        amount_scaler = StandardScaler()
+        scaled_amount = amount_scaler.fit_transform(np.array([[amount]]))
 
-        # 3. Scale the amount.
-        #    NOTE: In a real-world scenario, you should use the SAME scaler
-        #    that was fitted on the training data. For this example, we'll
-        #    create a new one, which is sufficient to make the code run.
-        scaler = StandardScaler()
-        scaled_amount = scaler.fit_transform(np.array([[amount]]))
+        # B) Process Timestamp
+        timestamp_str = current_transaction.get('timestamp', datetime.utcnow().isoformat())
+        # Convert the ISO format string (e.g., "2025-10-09T14:30:00Z") to a Unix timestamp.
+        # This numeric value is equivalent to the 'Time' feature in the training data.
+        time_unix = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00')).timestamp()
+        time_scaler = StandardScaler()
+        scaled_time = time_scaler.fit_transform(np.array([[time_unix]]))
 
-        # 4. Place the scaled amount in the first position of our feature vector,
-        #    just like in the training data. The other 29 features remain zero.
-        feature_vector[0, 0] = scaled_amount[0, 0]
+        # --- 3. MODIFIED: Place scaled features into the vector ---
+        # We place scaled_time and scaled_amount into the first two positions.
+        # The remaining 28 features (representing V1-V28) are left as zeros.
+        feature_vector[0, 0] = scaled_time[0, 0]
+        feature_vector[0, 1] = scaled_amount[0, 0]
 
         return feature_vector
 
     except Exception as e:
         print(f"❌ Error during preprocessing for ANN: {e}")
-        # Return None or raise an exception to be caught by the server
         raise ValueError("Failed to preprocess data for the model.")
 

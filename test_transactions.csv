@@ -1,0 +1,22 @@
+userId,amount,receiverAccount,receiverName,transactionType,timestamp,description,geolocation_lat,geolocation_lon,notes
+user_123,2500.00,acc_self,Salary Deposit,credit,2025-10-01T09:00:00Z,Paycheck,40.7128,-74.0060,Legitimate - recurring credit
+user_123,120.80,acc_321,City Power,debit,2025-10-01T11:00:00Z,Utility bill,40.7128,-74.0060,Legitimate - recurring bill
+user_123,4.85,acc_654,Morning Brew Cafe,debit,2025-10-01T14:27:51Z,Morning coffee,40.7128,-74.0060,Legitimate - daily routine
+user_123,2200.00,acc_rent,Landlord LLC,debit,2025-10-02T10:00:00Z,Rent payment,40.7128,-74.0060,Legitimate - recurring bill
+user_123,5.32,acc_654,Morning Brew Cafe,debit,2025-10-02T14:28:15Z,Morning coffee,40.7128,-74.0060,Legitimate - daily routine
+user_123,5.78,acc_654,Morning Brew Cafe,debit,2025-10-03T14:52:03Z,Morning coffee,40.7128,-74.0060,Legitimate - daily routine
+user_123,22.50,acc_rnd,City Transit,debit,2025-10-03T18:41:21Z,Misc purchase,40.7128,-74.0060,Legitimate - miscellaneous spending
+user_123,5.15,acc_654,Morning Brew Cafe,debit,2025-10-04T14:48:42Z,Morning coffee,40.7128,-74.0060,Legitimate - daily routine
+user_123,4.58,acc_654,Morning Brew Cafe,debit,2025-10-05T14:21:03Z,Morning coffee,40.7128,-74.0060,Legitimate - daily routine
+user_123,19.80,acc_rnd,Lunch Spot,debit,2025-10-05T18:05:33Z,Misc purchase,40.7128,-74.0060,Legitimate - miscellaneous spending
+user_123,5.95,acc_654,Morning Brew Cafe,debit,2025-10-06T14:26:48Z,Morning coffee,40.7128,-74.0060,Legitimate - daily routine
+user_123,35.40,acc_rnd,Online Retailer,debit,2025-10-06T21:48:19Z,Misc purchase,40.7128,-74.0060,Legitimate - miscellaneous spending
+user_123,78.90,acc_987,GroceryMart,debit,2025-10-07T23:00:21Z,Weekly groceries,40.7128,-74.0060,Legitimate - recurring shopping
+user_123,4.99,acc_654,Morning Brew Cafe,debit,2025-10-08T14:55:57Z,Morning coffee,40.7128,-74.0060,Legitimate - daily routine
+user_123,5.55,acc_654,Morning Brew Cafe,debit,2025-10-09T14:33:36Z,Morning coffee,40.7128,-74.0060,Legitimate - daily routine
+user_123,4500.00,acc_555,CryptoExchange,debit,2025-10-10T23:50:00Z,Digital Asset Purchase,51.5072,-0.1276,FRAUDULENT - Unusually high amount late at night for a new merchant type
+user_123,15.50,acc_111,Unknown Vendor,debit,2025-10-11T02:30:00Z,Misc Purchase,4.7110,-74.0721,FRAUDULENT - Small amount from a foreign location (Bogota) in the middle of the night
+user_123,950.00,acc_222,Gaming Universe,debit,2025-10-11T02:32:00Z,Online purchase,4.7110,-74.0721,FRAUDULENT - Second transaction from the same foreign location minutes after the first
+user_123,1200.00,acc_444,Wire Transfer,debit,2025-10-12T10:00:00Z,Transfer to external account,34.0522,-118.2437,FRAUDULENT - High value transfer from a different city (Los Angeles) than user's normal location
+user_123,5.21,acc_654,Morning Brew Cafe,debit,2025-10-12T14:38:29Z,Morning coffee,40.7128,-74.0060,Legitimate - daily routine
+

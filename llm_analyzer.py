@@ -1,7 +1,7 @@
 import os
 import requests
 import logging
-import json # Import the json library
+import json
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -17,15 +17,7 @@ LLM_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.
 
 def analyze_with_llm(full_data, scam_score):
     """
-    Sends transaction data and the ANN scam score to an LLM for analysis.
-    This function signature matches what is expected by main.py.
-
-    Args:
-        full_data (dict): The complete request payload containing current and historical data.
-        scam_score (float): The scam score from the ANN (0.0 to 1.0).
-
-    Returns:
-        A dictionary with the LLM's analysis, including a boolean flag and a reason.
+    MODIFIED: Sends enriched transaction data based on the new schema to an LLM for analysis.
     """
     if not LLM_API_KEY:
         logger.error("LLM_API_KEY not found in environment variables.")
@@ -38,44 +30,46 @@ def analyze_with_llm(full_data, scam_score):
     transaction_data = full_data.get('current_transaction', {})
     historical_data = full_data.get('historical_data', {})
     
+    # --- MODIFIED: Create a richer summary of past transactions for the prompt ---
+    previous_transaction_summary = [
+        f"Type: {t.get('transactionType', 'N/A')}, Amount: ${t.get('amount', 0)}, To: {t.get('receiverName', 'N/A')}"
+        for t in historical_data.get('previous_transactions', [])[:3]
+    ]
+
+    # --- MODIFIED: The prompt is now much more detailed using the new schema fields ---
     prompt = f"""
-    Analyze the following financial transaction for potential fraud.
+    Analyze the following financial transaction for potential fraud, acting as a senior risk analyst.
 
     Context:
-    - A machine learning model has already assigned a fraud score of {scam_score:.2f} (out of 1.0).
-    - Your role is to provide a final judgment and a clear, concise reason.
+    - A machine learning model has assigned an initial fraud score of {scam_score:.2f} (out of 1.0).
+    - Your role is to provide a final judgment using the detailed context below.
 
     User's Historical Data:
     - Average Transaction Value: ${historical_data.get('average_transaction_value')}
-    - Average Bank Account Value: ${historical_data.get('average_bank_account_value')}
-    - Normal Transaction Time: Around {historical_data.get('average_transaction_time')}
-    - Recent Transaction Categories: {[t.get('merchant_category', 'N/A') for t in historical_data.get('previous_transactions', [])[:5]]}
+    - A Sample of Recent Transactions: {previous_transaction_summary}
 
     Current Transaction to Analyze:
+    - Transaction Type: {transaction_data.get('transactionType', 'N/A').upper()}
     - Amount: ${transaction_data.get('amount')}
-    - Time: {transaction_data.get('transaction_time')}
-    - Location: {transaction_data.get('location')}
-    - Merchant Category: {transaction_data.get('merchant_category')}
+    - Receiver Name: {transaction_data.get('receiverName', 'N/A')}
+    - Receiver Account: {transaction_data.get('receiverAccount', 'N/A')}
+    - Timestamp: {transaction_data.get('timestamp')}
+    - Description: "{transaction_data.get('description', 'N/A')}"
+    - Geolocation: {transaction_data.get('geolocation')}
 
-    Based on all the information above, please provide a JSON response with two keys:
+    Based on all the information, especially comparing the current transaction's type, amount, and receiver to the user's history, provide a JSON response with two keys:
     1. "is_fraudulent": A boolean (true if you suspect fraud, otherwise false).
     2. "reason": A brief, one-sentence explanation for your decision.
     
     Example response:
     {{
         "is_fraudulent": true,
-        "reason": "The transaction amount is unusually high compared to the user's average and occurs at an odd time."
+        "reason": "This is a large debit to an unknown receiver, which is highly unusual compared to the user's typical small, recurring grocery debits."
     }}
     """
 
-    headers = {
-        "Content-Type": "application/json",
-    }
-    
-    payload = {
-        "contents": [{"parts": [{"text": prompt}]}]
-    }
-    
+    headers = {"Content-Type": "application/json"}
+    payload = {"contents": [{"parts": [{"text": prompt}]}]}
     full_url = f"{LLM_API_URL}?key={LLM_API_KEY}"
 
     try:

@@ -1,73 +1,92 @@
 import requests
 import json
 
-# --- FIXED THE TYPO IN THE URL HERE ---
 # The URL where your Flask application is running
-API_URL = "http://127.0.0.1:5000/analyze"
+# Note: Ensure this port matches the one in your main.py file (e.g., 7000 or 5000)
+API_URL = "http://127.0.0.1:7000/analyze"
+
+# --- Test Data Setup based on the new TransactionSchema ---
+
+# A list of historical transactions for context
+historical_transactions = [
+    {
+        "userId": "60d5f1f77b8c4b2a8c8b4567",
+        "amount": 50.10,
+        "receiverName": "Grocery Store",
+        "receiverAccount": "9876543210",
+        "transactionType": "debit",
+        "timestamp": "2025-10-08T15:00:00Z",
+        "description": "Weekly groceries",
+        "geolocation": {"latitude": 40.7128, "longitude": -74.0060} # New York
+    },
+    {
+        "userId": "60d5f1f77b8c4b2a8c8b4567",
+        "amount": 22.00,
+        "receiverName": "Metro Transit",
+        "receiverAccount": "1122334455",
+        "transactionType": "debit",
+        "timestamp": "2025-10-07T08:30:00Z",
+        "description": "Metro card top-up",
+        "geolocation": {"latitude": 40.7306, "longitude": -73.9352} # New York
+    },
+    {
+        "userId": "60d5f1f77b8c4b2a8c8b4567",
+        "amount": 1500.00,
+        "receiverName": "Paycheck Deposit",
+        "receiverAccount": "self",
+        "transactionType": "credit",
+        "timestamp": "2025-10-05T09:00:00Z",
+        "description": "Monthly salary",
+        "geolocation": None
+    }
+]
 
 # --- Test Case 1: A Normal, Legitimate Transaction ---
-# This payload represents a typical, low-risk transaction.
+# This payload sends a full current_transaction and a list of previous_transactions.
 legitimate_payload = {
     "current_transaction": {
+        "userId": "60d5f1f77b8c4b2a8c8b4567",
         "amount": 45.50,
-        "transaction_time": "14:30",
-        "merchant_category": "Groceries",
-        "location": "New York, NY"
+        "receiverAccount": "9876543210",
+        "receiverName": "Grocery Store",
+        "transactionType": "debit",
+        "timestamp": "2025-10-09T14:30:00Z",
+        "description": "More groceries",
+        "geolocation": {"latitude": 40.7128, "longitude": -74.0060} # New York
     },
-    "historical_data": {
-        "previous_transactions": [
-            {"amount": 50.10, "merchant_category": "Groceries"},
-            {"amount": 22.00, "merchant_category": "Transport"},
-            {"amount": 15.75, "merchant_category": "Cafe"},
-            {"amount": 120.00, "merchant_category": "Shopping"},
-            {"amount": 48.00, "merchant_category": "Groceries"}
-        ],
-        "average_transaction_value": 51.17,
-        "average_bank_account_value": 4500.00,
-        "average_transaction_time": "15:00"
-    }
+    "previous_transactions": historical_transactions
 }
 
 # --- Test Case 2: A Highly Suspicious Transaction ---
-# This payload represents an anomaly.
+# An anomalous transaction: large debit, unknown receiver, unusual time, foreign location.
 suspicious_payload = {
     "current_transaction": {
+        "userId": "60d5f1f77b8c4b2a8c8b4567",
         "amount": 8500.00,
-        "transaction_time": "03:15",
-        "merchant_category": "Online Gaming",
-        "location": "Bogota, CO"
+        "receiverAccount": "5551239876",
+        "receiverName": "Online Gaming Hub",
+        "transactionType": "debit",
+        "timestamp": "2025-10-09T03:15:00Z",
+        "description": "Purchase of in-game currency",
+        "geolocation": {"latitude": 4.7110, "longitude": -74.0721} # Bogota, CO
     },
-    "historical_data": {
-         "previous_transactions": [
-            {"amount": 50.10, "merchant_category": "Groceries"},
-            {"amount": 22.00, "merchant_category": "Transport"},
-            {"amount": 15.75, "merchant_category": "Cafe"},
-            {"amount": 120.00, "merchant_category": "Shopping"},
-            {"amount": 48.00, "merchant_category": "Groceries"}
-        ],
-        "average_transaction_value": 51.17,
-        "average_bank_account_value": 4500.00,
-        "average_transaction_time": "15:00"
-    }
+    "previous_transactions": historical_transactions
 }
 
 # --- Test Case 3: An Invalid Payload ---
-# This payload is missing the required 'historical_data' key.
+# This payload is missing the 'previous_transactions' key, which the server now requires.
 invalid_payload = {
     "current_transaction": {
+        "userId": "60d5f1f77b8c4b2a8c8b4567",
         "amount": 100.00,
-        "transaction_time": "10:00",
-        "merchant_category": "Utilities",
-        "location": "London, UK"
+        "transactionType": "debit",
+        "timestamp": "2025-10-09T10:00:00Z"
     }
-    # Missing "historical_data"
+    # Missing "previous_transactions"
 }
 
-
 def test_transaction_endpoint(payload, description):
-    """
-    Sends a payload to the /analyze endpoint and prints the response.
-    """
+    """Sends a payload to the /analyze endpoint and prints the response."""
     print(f"\n{'='*20} {description.upper()} {'='*20}")
     try:
         headers = {'Content-Type': 'application/json'}
@@ -81,7 +100,6 @@ def test_transaction_endpoint(payload, description):
     except requests.exceptions.HTTPError as http_err:
         print(f"❌ HTTP ERROR: Server responded with status code {http_err.response.status_code}")
         print("Server Error Message:")
-        # Use .text for non-JSON error responses (like 404 HTML pages)
         try:
             print(http_err.response.json())
         except json.JSONDecodeError:
@@ -91,7 +109,6 @@ def test_transaction_endpoint(payload, description):
         print("Please make sure your Flask server is running.")
         print(f"Error details: {err}")
     print('=' * (42 + len(description)))
-
 
 if __name__ == "__main__":
     # Run all the test cases
